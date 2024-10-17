@@ -1,20 +1,22 @@
 using System;
 
-// Interface untuk kemampuan
+// mendefinisikan kemampuan robot
 public interface IKemampuan
 {
-    int Cooldown { get; }
-    void Gunakan(Robot pengguna, Robot target);
+    int Cooldown { get; } // property yang mengembalikan waktu jeda pemakaian kemampuan
+    void Gunakan(Robot pengguna, Robot target); // untuk menggunakan kemampuan yang menerima dua parameter yaitu robot pengguna dan target
 }
 
-// Abstract class Robot
+// kelas abstrak yang mendefinisikan atribut umum untuk robot
 public abstract class Robot
+// Nama, energi, armor, Serangan adalah atribut dasar robot
 {
     public string Nama { get; protected set; }
     private int energi;
     private int armor;
     public int Serangan { get; protected set; }
 
+// Konstruktor menerima parameter untuk inisialisasi nama, energi, armor, dan serangan robot
     protected Robot(string nama, int energi, int armor, int serangan)
     {
         Nama = nama;
@@ -23,33 +25,39 @@ public abstract class Robot
         Serangan = serangan;
     }
 
-    // Metode untuk akses dan modifikasi energi
+    // Metode untuk akses dan modifikasi energi. GetEnergi dan SetEnergi mengakses dan memodifikasi energi robot. Nilai energi tidak boleh kurang dari 0 (menggunakan Math.Max)
     public int GetEnergi() => energi;
     public void SetEnergi(int nilai) => energi = Math.Max(0, nilai);
 
+    // sama seperti energi, armor juga memiliki akses dan modifikasi dengan batas minimum 0
     public int GetArmor() => armor;
     public void SetArmor(int nilai) => armor = Math.Max(0, nilai);
 
+    // metode untuk menyerang robot lain. 
     public void Serang(Robot target)
     {
+        // damage dihitung dengan rumus dibawah ini, hasilnya dikurangi dari energi target, lalu ditampilkan pesan serangan
         int damage = Math.Max(0, Serangan - target.GetArmor());
         target.SetEnergi(target.GetEnergi() - damage);
         Console.WriteLine($"{Nama} menyerang {target.Nama} dan mengurangi energinya sebesar {damage}.");
     }
 
+    // metode untuk menggunakan kemampuan khusus
     public abstract void GunakanKemampuan(IKemampuan kemampuan, Robot target);
 
+    // mencetak status robot seperti nama, energi, armor dan serangan
     public void CetakInformasi()
     {
         Console.WriteLine($"[Robot] {Nama} - Energi: {GetEnergi()}, Armor: {GetArmor()}, Serangan: {Serangan}");
     }
 }
 
-// Implementasi Bos Robot
+// Implementasi Bos Robot. BosRobot adalah turunan dari Robot 
 public class BosRobot : Robot
 {
     public BosRobot(string nama) : base(nama, 300, 30, 40) { }
 
+    // menangani serangan terhadap bos. jika energi mencapai 0, metode Mati() dipanggil
     public void Diserang(Robot penyerang)
     {
         int damage = Math.Max(0, penyerang.Serangan - GetArmor());
@@ -59,12 +67,14 @@ public class BosRobot : Robot
         if (GetEnergi() <= 0) Mati();
     }
 
+    // implementasi metode abstrak untuk menggunakan kemampuan khusus
     public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
     {
         Console.WriteLine($"{Nama} menggunakan {kemampuan.GetType().Name}.");
         kemampuan.Gunakan(this, target);
     }
 
+    // mencetak output bahwa bos telah dikalahkan
     private void Mati()
     {
         Console.WriteLine($"{Nama} telah dikalahkan!");
@@ -76,6 +86,7 @@ public class RobotBiasa : Robot
 {
     public RobotBiasa(string nama) : base(nama, 100, 10, 20) { }
 
+    // menggunakan kemampuan dnegan menampilkan pesan dan memanggil metode Gunakan
     public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
     {
         Console.WriteLine($"{Nama} menggunakan {kemampuan.GetType().Name}.");
@@ -83,9 +94,10 @@ public class RobotBiasa : Robot
     }
 }
 
-// Kemampuan Repair
+// Repair untuk memulihkan 30 energi ke robot pengguna
 public class Repair : IKemampuan
 {
+    // 2 giliran
     public int Cooldown => 2;
 
     public void Gunakan(Robot pengguna, Robot target)
@@ -95,7 +107,7 @@ public class Repair : IKemampuan
     }
 }
 
-// Kemampuan Electric Shock
+// Kemampuan Electric Shock mengurangi energi target sebesar 15
 public class ElectricShock : IKemampuan
 {
     public int Cooldown => 3;
@@ -107,7 +119,8 @@ public class ElectricShock : IKemampuan
     }
 }
 
-// Kemampuan Plasma Cannon
+// Kemampuan Plasma Cannon menembakkan serangan dengan damage 
++10 diatas serangan dasar
 public class PlasmaCannon : IKemampuan
 {
     public int Cooldown => 4;
@@ -120,7 +133,7 @@ public class PlasmaCannon : IKemampuan
     }
 }
 
-// Kemampuan Super Shield
+// Kemampuan Super Shield meningkatkan armor pengguna sebanyak 20
 public class SuperShield : IKemampuan
 {
     public int Cooldown => 5;

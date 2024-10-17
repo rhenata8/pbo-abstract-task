@@ -1,0 +1,177 @@
+using System;
+
+// Interface untuk kemampuan
+public interface IKemampuan
+{
+    int Cooldown { get; }
+    void Gunakan(Robot pengguna, Robot target);
+}
+
+// Abstract class Robot
+public abstract class Robot
+{
+    public string Nama { get; protected set; }
+    private int energi;
+    private int armor;
+    public int Serangan { get; protected set; }
+
+    protected Robot(string nama, int energi, int armor, int serangan)
+    {
+        Nama = nama;
+        this.energi = energi;
+        this.armor = armor;
+        Serangan = serangan;
+    }
+
+    // Metode untuk akses dan modifikasi energi
+    public int GetEnergi() => energi;
+    public void SetEnergi(int nilai) => energi = Math.Max(0, nilai);
+
+    public int GetArmor() => armor;
+    public void SetArmor(int nilai) => armor = Math.Max(0, nilai);
+
+    public void Serang(Robot target)
+    {
+        int damage = Math.Max(0, Serangan - target.GetArmor());
+        target.SetEnergi(target.GetEnergi() - damage);
+        Console.WriteLine($"{Nama} menyerang {target.Nama} dan mengurangi energinya sebesar {damage}.");
+    }
+
+    public abstract void GunakanKemampuan(IKemampuan kemampuan, Robot target);
+
+    public void CetakInformasi()
+    {
+        Console.WriteLine($"[Robot] {Nama} - Energi: {GetEnergi()}, Armor: {GetArmor()}, Serangan: {Serangan}");
+    }
+}
+
+// Implementasi Bos Robot
+public class BosRobot : Robot
+{
+    public BosRobot(string nama) : base(nama, 300, 30, 40) { }
+
+    public void Diserang(Robot penyerang)
+    {
+        int damage = Math.Max(0, penyerang.Serangan - GetArmor());
+        SetEnergi(GetEnergi() - damage);
+        Console.WriteLine($"{penyerang.Nama} menyerang {Nama} dan mengurangi energi bos sebesar {damage}.");
+
+        if (GetEnergi() <= 0) Mati();
+    }
+
+    public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
+    {
+        Console.WriteLine($"{Nama} menggunakan {kemampuan.GetType().Name}.");
+        kemampuan.Gunakan(this, target);
+    }
+
+    private void Mati()
+    {
+        Console.WriteLine($"{Nama} telah dikalahkan!");
+    }
+}
+
+// Robot Biasa sebagai turunan dari Robot
+public class RobotBiasa : Robot
+{
+    public RobotBiasa(string nama) : base(nama, 100, 10, 20) { }
+
+    public override void GunakanKemampuan(IKemampuan kemampuan, Robot target)
+    {
+        Console.WriteLine($"{Nama} menggunakan {kemampuan.GetType().Name}.");
+        kemampuan.Gunakan(this, target);
+    }
+}
+
+// Kemampuan Repair
+public class Repair : IKemampuan
+{
+    public int Cooldown => 2;
+
+    public void Gunakan(Robot pengguna, Robot target)
+    {
+        pengguna.SetEnergi(pengguna.GetEnergi() + 30);
+        Console.WriteLine($"{pengguna.Nama} memulihkan 30 energi.");
+    }
+}
+
+// Kemampuan Electric Shock
+public class ElectricShock : IKemampuan
+{
+    public int Cooldown => 3;
+
+    public void Gunakan(Robot pengguna, Robot target)
+    {
+        target.SetEnergi(target.GetEnergi() - 15);
+        Console.WriteLine($"{pengguna.Nama} memberikan kejutan listrik ke {target.Nama} dan mengurangi energinya sebesar 15.");
+    }
+}
+
+// Kemampuan Plasma Cannon
+public class PlasmaCannon : IKemampuan
+{
+    public int Cooldown => 4;
+
+    public void Gunakan(Robot pengguna, Robot target)
+    {
+        int damage = pengguna.Serangan + 10;
+        target.SetEnergi(target.GetEnergi() - damage);
+        Console.WriteLine($"{pengguna.Nama} menembakkan Plasma Cannon dan mengurangi energi {target.Nama} sebesar {damage}.");
+    }
+}
+
+// Kemampuan Super Shield
+public class SuperShield : IKemampuan
+{
+    public int Cooldown => 5;
+
+    public void Gunakan(Robot pengguna, Robot target)
+    {
+        pengguna.SetArmor(pengguna.GetArmor() + 20);
+        Console.WriteLine($"{pengguna.Nama} meningkatkan armor sebesar 20.");
+    }
+}
+
+// Program Utama
+class Program
+{
+    static void Main(string[] args)
+    {
+        Robot robot1 = new RobotBiasa("Robot Alpha");
+        Robot robot2 = new RobotBiasa("Robot Beta");
+        BosRobot bos = new BosRobot("Bos Titan");
+
+        IKemampuan repair = new Repair();
+        IKemampuan electricShock = new ElectricShock();
+        IKemampuan plasmaCannon = new PlasmaCannon();
+        IKemampuan superShield = new SuperShield();
+
+        robot1.CetakInformasi();
+        robot2.CetakInformasi();
+        bos.CetakInformasi();
+
+        Console.WriteLine("\n--- Pertarungan Dimulai ---\n");
+
+        robot1.Serang(bos);
+        bos.Diserang(robot1);
+
+        robot2.GunakanKemampuan(electricShock, bos);
+        bos.Diserang(robot2);
+
+        bos.GunakanKemampuan(superShield, bos);
+
+        robot1.GunakanKemampuan(plasmaCannon, bos);
+        bos.Diserang(robot1);
+
+        Console.WriteLine("\n--- Akhir Giliran ---\n");
+
+        
+        robot1.SetEnergi(robot1.GetEnergi() + 10);
+        robot2.SetEnergi(robot2.GetEnergi() + 10);
+        bos.SetEnergi(bos.GetEnergi() + 20);
+
+        robot1.CetakInformasi();
+        robot2.CetakInformasi();
+        bos.CetakInformasi();
+    }
+}
